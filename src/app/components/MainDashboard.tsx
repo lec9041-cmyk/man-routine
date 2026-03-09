@@ -175,7 +175,10 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
             return (
               <button
                 key={index}
-                onClick={() => setSelectedDate(date)}
+                onClick={() => {
+                  setSelectedDate(date);
+                  onNavigate('calendar', { date: date });
+                }}
                 className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-lg transition-all ${
                   isSelected 
                     ? 'bg-blue-500 text-white shadow-sm' 
@@ -393,15 +396,33 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
               </button>
             </div>
             <div className="space-y-2">
-              <button className="flex items-center gap-4 w-full p-3 rounded-xl hover:bg-gray-50 transition-all text-left">
+              <button 
+                onClick={() => {
+                  setShowMenu(false);
+                  onNavigate('goals-routines');
+                }}
+                className="flex items-center gap-4 w-full p-3 rounded-xl hover:bg-gray-50 transition-all text-left"
+              >
                 <Target className="w-5 h-5 text-gray-600" />
                 <p className="text-[15px] font-medium text-gray-900">목표 설정</p>
               </button>
-              <button className="flex items-center gap-4 w-full p-3 rounded-xl hover:bg-gray-50 transition-all text-left">
+              <button 
+                onClick={() => {
+                  setShowMenu(false);
+                  onNavigate('goals-routines');
+                }}
+                className="flex items-center gap-4 w-full p-3 rounded-xl hover:bg-gray-50 transition-all text-left"
+              >
                 <Flame className="w-5 h-5 text-gray-600" />
                 <p className="text-[15px] font-medium text-gray-900">루틴 관리</p>
               </button>
-              <button className="flex items-center gap-4 w-full p-3 rounded-xl hover:bg-gray-50 transition-all text-left">
+              <button 
+                onClick={() => {
+                  setShowMenu(false);
+                  onNavigate('calendar');
+                }}
+                className="flex items-center gap-4 w-full p-3 rounded-xl hover:bg-gray-50 transition-all text-left"
+              >
                 <CalendarIcon className="w-5 h-5 text-gray-600" />
                 <p className="text-[15px] font-medium text-gray-900">캘린더</p>
               </button>

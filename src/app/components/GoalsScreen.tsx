@@ -69,7 +69,10 @@ export function GoalsScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Goal
   const [newRoutine, setNewRoutine] = useState({
     title: "",
     icon: "🎯",
+    frequency: "weekly" as "daily" | "weekly" | "monthly",
+    trackingType: "count" as "count" | "days",
     targetCount: 7,
+    selectedDays: [] as number[], // 0=일, 1=월, 2=화, 3=수, 4=목, 5=금, 6=토
   });
 
   const [goals, setGoals] = useState<Goal[]>([
@@ -228,7 +231,7 @@ export function GoalsScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Goal
     );
 
     setShowAddRoutineModal(false);
-    setNewRoutine({ title: "", icon: "🎯", targetCount: 7 });
+    setNewRoutine({ title: "", icon: "🎯", frequency: "weekly", trackingType: "count", targetCount: 7, selectedDays: [] });
     setSelectedGoalId("");
     setSelectedCellIndex(-1);
   };
@@ -706,23 +709,113 @@ export function GoalsScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Goal
                   </div>
                 </div>
 
-                {/* Target Count */}
+                {/* Frequency Selection */}
                 <div>
-                  <label className="text-[13px] font-medium text-gray-700 mb-2 block">주간 목표 횟수</label>
-                  <input
-                    type="number"
-                    value={newRoutine.targetCount}
-                    onChange={(e) => setNewRoutine({ ...newRoutine, targetCount: parseInt(e.target.value) || 1 })}
-                    min="1"
-                    max="30"
-                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-[14px] focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
-                  />
+                  <label className="text-[13px] font-medium text-gray-700 mb-2 block">반복 주기</label>
+                  <div className="flex gap-2">
+                    {[
+                      { value: 'daily', label: '일일' },
+                      { value: 'weekly', label: '주간' },
+                      { value: 'monthly', label: '월간' }
+                    ].map((freq) => (
+                      <button
+                        key={freq.value}
+                        onClick={() => setNewRoutine({ ...newRoutine, frequency: freq.value as any })}
+                        className={`flex-1 px-3 py-2 rounded-lg text-[13px] font-medium transition-all ${
+                          newRoutine.frequency === freq.value
+                            ? "bg-purple-500 text-white"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                      >
+                        {freq.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+
+                {/* Tracking Type Selection */}
+                {(newRoutine.frequency === 'weekly' || newRoutine.frequency === 'monthly') && (
+                  <div>
+                    <label className="text-[13px] font-medium text-gray-700 mb-2 block">추적 방식</label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setNewRoutine({ ...newRoutine, trackingType: 'count' })}
+                        className={`flex-1 px-3 py-2 rounded-lg text-[13px] font-medium transition-all ${
+                          newRoutine.trackingType === 'count'
+                            ? "bg-purple-500 text-white"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                      >
+                        횟수 기반
+                      </button>
+                      <button
+                        onClick={() => setNewRoutine({ ...newRoutine, trackingType: 'days' })}
+                        className={`flex-1 px-3 py-2 rounded-lg text-[13px] font-medium transition-all ${
+                          newRoutine.trackingType === 'days'
+                            ? "bg-purple-500 text-white"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                      >
+                        요일 지정
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Days Selection (for 'days' tracking type) */}
+                {(newRoutine.frequency === 'weekly' || newRoutine.frequency === 'monthly') && newRoutine.trackingType === 'days' && (
+                  <div>
+                    <label className="text-[13px] font-medium text-gray-700 mb-2 block">요일 선택</label>
+                    <div className="flex gap-1">
+                      {['일', '월', '화', '수', '목', '금', '토'].map((day, index) => {
+                        const isSelected = newRoutine.selectedDays.includes(index);
+                        return (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              const days = isSelected
+                                ? newRoutine.selectedDays.filter(d => d !== index)
+                                : [...newRoutine.selectedDays, index].sort();
+                              setNewRoutine({ ...newRoutine, selectedDays: days });
+                            }}
+                            className={`flex-1 aspect-square rounded-lg text-[12px] font-semibold transition-all ${
+                              isSelected
+                                ? index === 0 ? "bg-red-500 text-white" : index === 6 ? "bg-blue-500 text-white" : "bg-purple-500 text-white"
+                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            }`}
+                          >
+                            {day}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Target Count (for 'count' tracking type or daily) */}
+                {(newRoutine.frequency === 'daily' || newRoutine.trackingType === 'count') && (
+                  <div>
+                    <label className="text-[13px] font-medium text-gray-700 mb-2 block">
+                      {newRoutine.frequency === 'daily' ? '일일 목표 횟수' : 
+                       newRoutine.frequency === 'weekly' ? '주간 목표 횟수' : '월간 목표 횟수'}
+                    </label>
+                    <input
+                      type="number"
+                      value={newRoutine.targetCount}
+                      onChange={(e) => setNewRoutine({ ...newRoutine, targetCount: parseInt(e.target.value) || 1 })}
+                      min="1"
+                      max="30"
+                      className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-[14px] focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
+                    />
+                  </div>
+                )}
 
                 {/* Info */}
                 <div className="bg-blue-50 rounded-xl p-3">
                   <p className="text-[12px] text-blue-700 leading-relaxed">
-                    💡 이 루틴이 선택한 목표에 연결됩니다.
+                    💡 {newRoutine.trackingType === 'days' 
+                      ? '선택한 요일에 루틴을 수행하세요.' 
+                      : `${newRoutine.frequency === 'daily' ? '매일' : newRoutine.frequency === 'weekly' ? '이번 주' : '이번 달'} ${newRoutine.targetCount}회를 목표로 합니다.`}
                   </p>
                 </div>
               </div>

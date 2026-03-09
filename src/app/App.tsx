@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckSquare, Target, Calendar } from "lucide-react";
+import { Home, CheckSquare, Target, Calendar } from "lucide-react";
 import { MainDashboard } from "./components/MainDashboard";
 import { TodoScreen } from "./components/TodoScreen";
 import { GoalRoutineScreen } from "./components/GoalRoutineScreen";
@@ -25,7 +25,7 @@ export default function App() {
   };
 
   const tabs = [
-    { id: "home" as const, label: "홈", icon: CheckSquare },
+    { id: "home" as const, label: "홈", icon: Home },
     { id: "todos" as const, label: "할일", icon: CheckSquare },
     { id: "goals-routines" as const, label: "목표·루틴", icon: Target },
     { id: "calendar" as const, label: "달력", icon: Calendar },

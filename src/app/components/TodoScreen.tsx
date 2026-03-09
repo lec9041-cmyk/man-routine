@@ -52,6 +52,7 @@ export function TodoScreen({ onNavigate, shouldOpenAddModal }: TodoScreenProps) 
   const [showCategoryInput, setShowCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [showDeleteMenu, setShowDeleteMenu] = useState<string | null>(null);
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
   const [newTodo, setNewTodo] = useState({
     title: "",
     category: "업무",
@@ -78,175 +79,77 @@ export function TodoScreen({ onNavigate, shouldOpenAddModal }: TodoScreenProps) 
       dueDate: "오늘",
       subTasks: [
         { id: "1-1", title: "시장 조사 및 분석", completed: true },
-        { id: "1-2", title: "기능 요구사항 정리", completed: false },
-        { id: "1-3", title: "일정 계획 수립", completed: false },
+        { id: "1-2", title: "경쟁사 분석", completed: true },
+        { id: "1-3", title: "기획서 초안 작성", completed: false },
       ],
-      expanded: false,
     },
     {
       id: "2",
-      title: "디자인 리뷰 미팅",
+      title: "팀 회의 준비",
       category: "업무",
       time: "14:00",
-      completed: false,
+      completed: true,
       priority: "high",
       dueDate: "오늘",
-      subTasks: [
-        { id: "2-1", title: "피드백 자료 준비", completed: false },
-        { id: "2-2", title: "프로토타입 최종 점검", completed: false },
-      ],
-      expanded: false,
     },
     {
       id: "3",
       title: "운동하기",
-      category: "개인",
+      category: "건강",
       time: "18:00",
-      completed: true,
+      completed: false,
       priority: "medium",
       dueDate: "오늘",
-      subTasks: [],
-      expanded: false,
     },
     {
       id: "4",
-      title: "영어 공부 30분",
+      title: "영어 공부",
       category: "학습",
       completed: false,
       priority: "medium",
-      dueDate: "오늘",
-      subTasks: [],
-      expanded: false,
+      dueDate: "내일",
     },
     {
       id: "5",
-      title: "장보기",
-      category: "개인",
+      title: "독서",
+      category: "취미",
       completed: false,
       priority: "low",
-      dueDate: "내일",
-      subTasks: [
-        { id: "5-1", title: "채소류", completed: false },
-        { id: "5-2", title: "과일", completed: false },
-        { id: "5-3", title: "생필품", completed: false },
-      ],
-      expanded: false,
-    },
-    {
-      id: "6",
-      title: "월간 보고서 작성",
-      category: "업무",
-      completed: false,
-      priority: "medium",
-      dueDate: "이번 주",
-      subTasks: [],
-      expanded: false,
+      dueDate: "이번주",
     },
   ]);
 
+  const priorityColors = {
+    high: "bg-red-400",
+    medium: "bg-yellow-400",
+    low: "bg-blue-400",
+  };
+
   const toggleTodo = (id: string) => {
-    setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      )
+    setTodos(todos.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+  };
+
+  const toggleSubTask = (todoId: string, subTaskId: string) => {
+    setTodos(
+      todos.map((todo) => {
+        if (todo.id === todoId && todo.subTasks) {
+          return {
+            ...todo,
+            subTasks: todo.subTasks.map((st) =>
+              st.id === subTaskId ? { ...st, completed: !st.completed } : st
+            ),
+          };
+        }
+        return todo;
+      })
     );
   };
 
   const toggleExpand = (id: string) => {
-    setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === id ? { ...todo, expanded: !todo.expanded } : todo
-      )
-    );
+    setTodos(todos.map(t => t.id === id ? { ...t, expanded: !t.expanded } : t));
   };
 
-  const toggleSubTask = (todoId: string, subTaskId: string) => {
-    setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === todoId
-          ? {
-              ...todo,
-              subTasks: todo.subTasks?.map((st) =>
-                st.id === subTaskId ? { ...st, completed: !st.completed } : st
-              ),
-            }
-          : todo
-      )
-    );
-  };
-
-  const addSubTask = (todoId: string) => {
-    if (!newSubTaskText.trim()) return;
-
-    setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === todoId
-          ? {
-              ...todo,
-              subTasks: [
-                ...(todo.subTasks || []),
-                {
-                  id: `${todoId}-${Date.now()}`,
-                  title: newSubTaskText,
-                  completed: false,
-                },
-              ],
-            }
-          : todo
-      )
-    );
-
-    setNewSubTaskText("");
-    setNewSubTaskId(null);
-  };
-
-  const deleteSubTask = (todoId: string, subTaskId: string) => {
-    setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === todoId
-          ? {
-              ...todo,
-              subTasks: todo.subTasks?.filter((st) => st.id !== subTaskId),
-            }
-          : todo
-      )
-    );
-  };
-
-  const deleteTodo = (todoId: string) => {
-    setTodos((prev) => prev.filter((todo) => todo.id !== todoId));
-    setShowDeleteMenu(null);
-  };
-
-  const handleEditTodo = (todo: Todo) => {
-    setEditingTodo(todo);
-    setShowEditModal(true);
-    setShowDeleteMenu(null);
-  };
-
-  const handleUpdateTodo = () => {
-    if (!editingTodo || !editingTodo.title.trim()) return;
-
-    setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === editingTodo.id
-          ? {
-              ...editingTodo,
-              title: editingTodo.title,
-              category: editingTodo.category,
-              time: editingTodo.time || undefined,
-              priority: editingTodo.priority,
-              dueDate: editingTodo.dueDate,
-            }
-          : todo
-      )
-    );
-
-    setShowEditModal(false);
-    setEditingTodo(null);
-  };
-
-  const handleAddTodo = () => {
+  const addTodo = () => {
     if (!newTodo.title.trim()) return;
 
     const todo: Todo = {
@@ -257,12 +160,9 @@ export function TodoScreen({ onNavigate, shouldOpenAddModal }: TodoScreenProps) 
       completed: false,
       priority: newTodo.priority,
       dueDate: newTodo.dueDate,
-      subTasks: [],
-      expanded: false,
     };
 
     setTodos([...todos, todo]);
-    setShowAddModal(false);
     setNewTodo({
       title: "",
       category: "업무",
@@ -270,6 +170,65 @@ export function TodoScreen({ onNavigate, shouldOpenAddModal }: TodoScreenProps) 
       priority: "medium",
       dueDate: "오늘",
     });
+    setShowAddModal(false);
+  };
+
+  const updateTodo = () => {
+    if (!editingTodo) return;
+
+    setTodos(todos.map(t => t.id === editingTodo.id ? editingTodo : t));
+    setShowEditModal(false);
+    setEditingTodo(null);
+  };
+
+  const deleteTodo = (id: string) => {
+    setTodos(todos.filter(t => t.id !== id));
+    setShowDeleteMenu(null);
+  };
+
+  const deleteAllCompleted = () => {
+    setTodos(todos.filter(t => !t.completed));
+    setShowDeleteAllConfirm(false);
+  };
+
+  const handleEditTodo = (todo: Todo) => {
+    setEditingTodo(todo);
+    setShowEditModal(true);
+    setShowDeleteMenu(null);
+  };
+
+  const addSubTask = (todoId: string) => {
+    if (!newSubTaskText.trim()) return;
+
+    setTodos(
+      todos.map((todo) => {
+        if (todo.id === todoId) {
+          const subTasks = todo.subTasks || [];
+          return {
+            ...todo,
+            subTasks: [
+              ...subTasks,
+              {
+                id: `${todoId}-${Date.now()}`,
+                title: newSubTaskText,
+                completed: false,
+              },
+            ],
+          };
+        }
+        return todo;
+      })
+    );
+    setNewSubTaskText("");
+    setNewSubTaskId(null);
+  };
+
+  const addCategory = () => {
+    if (!newCategoryName.trim() || categories.includes(newCategoryName)) return;
+    
+    setCategories([...categories, newCategoryName]);
+    setNewCategoryName("");
+    setShowCategoryInput(false);
   };
 
   const filteredTodos = todos.filter((todo) => {
@@ -278,15 +237,9 @@ export function TodoScreen({ onNavigate, shouldOpenAddModal }: TodoScreenProps) 
     return true;
   });
 
-  const completedCount = filteredTodos.filter((t) => t.completed).length;
   const totalCount = filteredTodos.length;
+  const completedCount = filteredTodos.filter(t => t.completed).length;
   const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
-
-  const priorityColors = {
-    high: "bg-red-500",
-    medium: "bg-orange-500",
-    low: "bg-gray-400",
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 pb-20">
@@ -300,8 +253,11 @@ export function TodoScreen({ onNavigate, shouldOpenAddModal }: TodoScreenProps) 
             <ChevronLeft className="w-4.5 h-4.5 text-gray-700" />
           </button>
           <h1 className="text-[18px] font-bold text-gray-900">할일</h1>
-          <button className="w-9 h-9 rounded-full bg-white/70 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all shadow-sm">
-            <Search className="w-4.5 h-4.5 text-gray-700" />
+          <button 
+            onClick={() => setShowDeleteAllConfirm(true)}
+            className="w-9 h-9 rounded-full bg-white/70 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all shadow-sm"
+          >
+            <Trash2 className="w-4 h-4 text-red-500" />
           </button>
         </div>
 
@@ -465,95 +421,61 @@ export function TodoScreen({ onNavigate, shouldOpenAddModal }: TodoScreenProps) 
 
                 {/* SubTasks */}
                 {todo.expanded && hasSubTasks && (
-                  <div className="ml-8 mt-2 space-y-1">
-                    {todo.subTasks?.map((subTask) => (
+                  <div className="ml-8 mt-1 space-y-1">
+                    {todo.subTasks!.map((subTask) => (
                       <div
                         key={subTask.id}
-                        className="flex items-center gap-2.5 group"
+                        className="bg-white/50 rounded-lg p-2 flex items-center gap-2"
                       >
                         <button
                           onClick={() => toggleSubTask(todo.id, subTask.id)}
-                          className="flex items-center gap-2.5 flex-1"
+                          className="flex-shrink-0"
                         >
                           {subTask.completed ? (
-                            <CheckCircle2 className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />
                           ) : (
-                            <Circle className="w-4 h-4 text-gray-300 group-hover:text-blue-400 transition-colors flex-shrink-0" />
+                            <Circle className="w-3.5 h-3.5 text-gray-300" />
                           )}
-                          <p
-                            className={`text-[13px] text-left ${
-                              subTask.completed
-                                ? "text-gray-400 line-through"
-                                : "text-gray-700"
-                            }`}
-                          >
-                            {subTask.title}
-                          </p>
                         </button>
-                        <button
-                          onClick={() => deleteSubTask(todo.id, subTask.id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 w-5 h-5 flex items-center justify-center hover:text-red-600"
+                        <p
+                          className={`text-[12px] flex-1 ${
+                            subTask.completed
+                              ? "text-gray-400 line-through"
+                              : "text-gray-700"
+                          }`}
                         >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
+                          {subTask.title}
+                        </p>
                       </div>
                     ))}
-                    
-                    {/* Add SubTask Input */}
                     {newSubTaskId === todo.id ? (
-                      <div className="flex items-center gap-2.5 mt-2">
-                        <Circle className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                      <div className="flex gap-1">
                         <input
                           type="text"
                           value={newSubTaskText}
                           onChange={(e) => setNewSubTaskText(e.target.value)}
-                          onKeyPress={(e) => {
-                            if (e.key === "Enter") {
-                              addSubTask(todo.id);
-                            }
-                          }}
-                          onBlur={() => {
-                            if (newSubTaskText.trim()) {
-                              addSubTask(todo.id);
-                            } else {
-                              setNewSubTaskId(null);
-                            }
-                          }}
-                          placeholder="하위 항목 입력..."
-                          className="flex-1 text-[13px] text-gray-700 outline-none bg-transparent border-b border-gray-200 pb-1"
+                          onKeyPress={(e) => e.key === 'Enter' && addSubTask(todo.id)}
+                          placeholder="서브태스크 입력..."
                           autoFocus
+                          className="flex-1 px-2 py-1 text-[12px] rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500"
                         />
+                        <button
+                          onClick={() => addSubTask(todo.id)}
+                          className="px-2 py-1 bg-blue-500 text-white rounded-lg text-[11px]"
+                        >
+                          추가
+                        </button>
                       </div>
                     ) : (
                       <button
                         onClick={() => setNewSubTaskId(todo.id)}
-                        className="flex items-center gap-2.5 text-gray-400 hover:text-blue-500 transition-colors mt-2"
+                        className="w-full py-1.5 text-[11px] text-gray-500 hover:text-blue-600 flex items-center justify-center gap-1"
                       >
-                        <Plus className="w-4 h-4 flex-shrink-0" />
-                        <p className="text-[13px]">하위 항목 추가</p>
+                        <Plus className="w-3 h-3" />
+                        서브태스크 추가
                       </button>
                     )}
                   </div>
-                )}
-
-                {/* Show SubTask Button or Add First SubTask when collapsed */}
-                {!todo.expanded && (
-                  <button
-                    onClick={() => toggleExpand(todo.id)}
-                    className="w-full px-4 pb-3 pt-2 flex items-center justify-center gap-1 text-gray-400 hover:text-blue-600 transition-colors border-t border-gray-100"
-                  >
-                    {hasSubTasks ? (
-                      <>
-                        <span className="text-xs">하위 항목 {totalSubTasks}개</span>
-                        <ChevronDown className="w-3.5 h-3.5" />
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-3.5 h-3.5" />
-                        <span className="text-xs">하위 항목 추가</span>
-                      </>
-                    )}
-                  </button>
                 )}
               </div>
             );
@@ -561,183 +483,172 @@ export function TodoScreen({ onNavigate, shouldOpenAddModal }: TodoScreenProps) 
         </div>
       </div>
 
-      {/* Floating Add Button */}
-      <button 
+      {/* FAB */}
+      <button
         onClick={() => setShowAddModal(true)}
-        className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-blue-600 shadow-lg hover:shadow-xl transition-all flex items-center justify-center hover:scale-105"
+        className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-blue-600 text-white shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center z-40"
       >
-        <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
+        <Plus className="w-7 h-7" />
       </button>
+
+      {/* Delete All Confirmation Modal */}
+      {showDeleteAllConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <h2 className="text-[18px] font-bold text-gray-900 mb-2">완료된 할일 모두 삭제</h2>
+            <p className="text-[14px] text-gray-600 mb-6">
+              완료된 할일 {todos.filter(t => t.completed).length}개를 모두 삭제하시겠습니까?
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowDeleteAllConfirm(false)}
+                className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-all"
+              >
+                취소
+              </button>
+              <button
+                onClick={deleteAllCompleted}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition-all"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Todo Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-end justify-center">
-          <div className="bg-white rounded-t-3xl w-full max-w-md shadow-2xl animate-slide-up">
-            <div className="px-5 pt-4 pb-6">
-              {/* Modal Header */}
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-semibold text-gray-800">새 할일 추가</h2>
-                <button
-                  onClick={() => setShowAddModal(false)}
-                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
-                >
-                  <Plus className="w-5 h-5 text-gray-600 rotate-45" />
-                </button>
+        <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
+          <div className="bg-white rounded-t-3xl w-full max-w-md p-6 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[20px] font-bold text-gray-900">새 할일</h2>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+              >
+                <X className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
+                  할일
+                </label>
+                <input
+                  type="text"
+                  value={newTodo.title}
+                  onChange={(e) => setNewTodo({ ...newTodo, title: e.target.value })}
+                  placeholder="할일을 입력하세요"
+                  className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none text-[14px]"
+                />
               </div>
 
-              <div className="space-y-4 max-h-[70vh] overflow-y-auto pb-4">
-                {/* Title Input */}
-                <div>
-                  <label className="text-[13px] font-medium text-gray-700 mb-2 block">할일</label>
-                  <input
-                    type="text"
-                    value={newTodo.title}
-                    onChange={(e) => setNewTodo({ ...newTodo, title: e.target.value })}
-                    placeholder="예: 프로젝트 기획서 작성"
-                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
-                    autoFocus
-                  />
-                </div>
-
-                {/* Category Selection */}
-                <div>
-                  <label className="text-[13px] font-medium text-gray-700 mb-2 block">카테고리</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {categories.map((category) => (
-                      <button
-                        key={category}
-                        onClick={() => setNewTodo({ ...newTodo, category })}
-                        className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
-                          newTodo.category === category
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-gray-100 text-gray-600 hover:bg-gray-150"
-                        }`}
-                      >
-                        {category}
-                      </button>
-                    ))}
-                    {showCategoryInput ? (
+              <div>
+                <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
+                  카테고리
+                </label>
+                <div className="flex gap-2 flex-wrap">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setNewTodo({ ...newTodo, category: cat })}
+                      className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
+                        newTodo.category === cat
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                  {showCategoryInput ? (
+                    <div className="flex gap-1">
                       <input
                         type="text"
                         value={newCategoryName}
                         onChange={(e) => setNewCategoryName(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === "Enter") {
-                            setCategories([...categories, newCategoryName]);
-                            setNewTodo({ ...newTodo, category: newCategoryName });
-                            setNewCategoryName("");
-                            setShowCategoryInput(false);
-                          }
-                        }}
-                        onBlur={() => {
-                          if (newCategoryName.trim()) {
-                            setCategories([...categories, newCategoryName]);
-                            setNewTodo({ ...newTodo, category: newCategoryName });
-                            setNewCategoryName("");
-                            setShowCategoryInput(false);
-                          } else {
-                            setShowCategoryInput(false);
-                          }
-                        }}
-                        placeholder="새 카테고리 입력..."
-                        className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
+                        onKeyPress={(e) => e.key === 'Enter' && addCategory()}
+                        placeholder="카테고리명"
+                        autoFocus
+                        className="px-2 py-1 text-[12px] rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 w-24"
                       />
-                    ) : (
                       <button
-                        onClick={() => setShowCategoryInput(true)}
-                        className="px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all bg-gray-100 text-gray-600 hover:bg-gray-150"
+                        onClick={addCategory}
+                        className="px-2 py-1 bg-blue-500 text-white rounded-lg text-[11px]"
                       >
-                        + 새 카테고리
+                        추가
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowCategoryInput(true)}
+                      className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-400 text-[12px] flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      추가
+                    </button>
+                  )}
                 </div>
+              </div>
 
-                {/* Time Input */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[13px] font-medium text-gray-700 mb-2 block">시간 (선택)</label>
+                  <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
+                    시간
+                  </label>
                   <input
                     type="time"
                     value={newTodo.time}
                     onChange={(e) => setNewTodo({ ...newTodo, time: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
+                    className="w-full px-3 py-2 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none text-[13px]"
                   />
                 </div>
 
-                {/* Due Date Selection */}
                 <div>
-                  <label className="text-[13px] font-medium text-gray-700 mb-2 block">마감일</label>
-                  <div className="flex gap-2">
-                    {["오늘", "내일", "이번 주"].map((date) => (
-                      <button
-                        key={date}
-                        onClick={() => setNewTodo({ ...newTodo, dueDate: date })}
-                        className={`flex-1 px-3 py-2 rounded-xl text-[13px] font-medium transition-all ${
-                          newTodo.dueDate === date
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-gray-100 text-gray-600 hover:bg-gray-150"
-                        }`}
-                      >
-                        {date}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Priority Selection */}
-                <div>
-                  <label className="text-[13px] font-medium text-gray-700 mb-2 block">우선순위</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      onClick={() => setNewTodo({ ...newTodo, priority: "high" })}
-                      className={`px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all ${
-                        newTodo.priority === "high"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-150"
-                      }`}
-                    >
-                      🔴 높음
-                    </button>
-                    <button
-                      onClick={() => setNewTodo({ ...newTodo, priority: "medium" })}
-                      className={`px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all ${
-                        newTodo.priority === "medium"
-                          ? "bg-orange-100 text-orange-700"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-150"
-                      }`}
-                    >
-                      🟠 보통
-                    </button>
-                    <button
-                      onClick={() => setNewTodo({ ...newTodo, priority: "low" })}
-                      className={`px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all ${
-                        newTodo.priority === "low"
-                          ? "bg-gray-200 text-gray-700"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-150"
-                      }`}
-                    >
-                      ⚪ 낮음
-                    </button>
-                  </div>
+                  <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
+                    우선순위
+                  </label>
+                  <select
+                    value={newTodo.priority}
+                    onChange={(e) => setNewTodo({ ...newTodo, priority: e.target.value as any })}
+                    className="w-full px-3 py-2 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none text-[13px]"
+                  >
+                    <option value="high">높음</option>
+                    <option value="medium">중간</option>
+                    <option value="low">낮음</option>
+                  </select>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 mt-5">
-                <button
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-medium text-[14px] hover:bg-gray-200 transition-colors"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={handleAddTodo}
-                  disabled={!newTodo.title.trim()}
-                  className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-medium text-[14px] hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  추가하기
-                </button>
+              <div>
+                <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
+                  마감일
+                </label>
+                <div className="flex gap-2">
+                  {["오늘", "내일", "이번주"].map((date) => (
+                    <button
+                      key={date}
+                      onClick={() => setNewTodo({ ...newTodo, dueDate: date })}
+                      className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
+                        newTodo.dueDate === date
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {date}
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              <button
+                onClick={addTodo}
+                className="w-full py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-all"
+              >
+                추가하기
+              </button>
             </div>
           </div>
         </div>
@@ -745,173 +656,90 @@ export function TodoScreen({ onNavigate, shouldOpenAddModal }: TodoScreenProps) 
 
       {/* Edit Todo Modal */}
       {showEditModal && editingTodo && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-end justify-center">
-          <div className="bg-white rounded-t-3xl w-full max-w-md shadow-2xl animate-slide-up">
-            <div className="px-5 pt-4 pb-6">
-              {/* Modal Header */}
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-semibold text-gray-800">할일 수정</h2>
-                <button
-                  onClick={() => setShowEditModal(false)}
-                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
-                >
-                  <Plus className="w-5 h-5 text-gray-600 rotate-45" />
-                </button>
+        <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
+          <div className="bg-white rounded-t-3xl w-full max-w-md p-6 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[20px] font-bold text-gray-900">할일 수정</h2>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingTodo(null);
+                }}
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+              >
+                <X className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
+                  할일
+                </label>
+                <input
+                  type="text"
+                  value={editingTodo.title}
+                  onChange={(e) => setEditingTodo({ ...editingTodo, title: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none text-[14px]"
+                />
               </div>
 
-              <div className="space-y-4 max-h-[70vh] overflow-y-auto pb-4">
-                {/* Title Input */}
-                <div>
-                  <label className="text-[13px] font-medium text-gray-700 mb-2 block">할일</label>
-                  <input
-                    type="text"
-                    value={editingTodo.title}
-                    onChange={(e) => setEditingTodo({ ...editingTodo, title: e.target.value })}
-                    placeholder="예: 프로젝트 기획서 작성"
-                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
-                    autoFocus
-                  />
+              <div>
+                <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
+                  카테고리
+                </label>
+                <div className="flex gap-2 flex-wrap">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setEditingTodo({ ...editingTodo, category: cat })}
+                      className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
+                        editingTodo.category === cat
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
                 </div>
+              </div>
 
-                {/* Category Selection */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[13px] font-medium text-gray-700 mb-2 block">카테고리</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {categories.map((category) => (
-                      <button
-                        key={category}
-                        onClick={() => setEditingTodo({ ...editingTodo, category })}
-                        className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
-                          editingTodo.category === category
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-gray-100 text-gray-600 hover:bg-gray-150"
-                        }`}
-                      >
-                        {category}
-                      </button>
-                    ))}
-                    {showCategoryInput ? (
-                      <input
-                        type="text"
-                        value={newCategoryName}
-                        onChange={(e) => setNewCategoryName(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === "Enter") {
-                            setCategories([...categories, newCategoryName]);
-                            setEditingTodo({ ...editingTodo, category: newCategoryName });
-                            setNewCategoryName("");
-                            setShowCategoryInput(false);
-                          }
-                        }}
-                        onBlur={() => {
-                          if (newCategoryName.trim()) {
-                            setCategories([...categories, newCategoryName]);
-                            setEditingTodo({ ...editingTodo, category: newCategoryName });
-                            setNewCategoryName("");
-                            setShowCategoryInput(false);
-                          } else {
-                            setShowCategoryInput(false);
-                          }
-                        }}
-                        placeholder="새 카테고리 입력..."
-                        className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
-                      />
-                    ) : (
-                      <button
-                        onClick={() => setShowCategoryInput(true)}
-                        className="px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all bg-gray-100 text-gray-600 hover:bg-gray-150"
-                      >
-                        + 새 카테고리
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Time Input */}
-                <div>
-                  <label className="text-[13px] font-medium text-gray-700 mb-2 block">시간 (선택)</label>
+                  <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
+                    시간
+                  </label>
                   <input
                     type="time"
-                    value={editingTodo.time}
+                    value={editingTodo.time || ''}
                     onChange={(e) => setEditingTodo({ ...editingTodo, time: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
+                    className="w-full px-3 py-2 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none text-[13px]"
                   />
                 </div>
 
-                {/* Due Date Selection */}
                 <div>
-                  <label className="text-[13px] font-medium text-gray-700 mb-2 block">마감일</label>
-                  <div className="flex gap-2">
-                    {["오늘", "내일", "이번 주"].map((date) => (
-                      <button
-                        key={date}
-                        onClick={() => setEditingTodo({ ...editingTodo, dueDate: date })}
-                        className={`flex-1 px-3 py-2 rounded-xl text-[13px] font-medium transition-all ${
-                          editingTodo.dueDate === date
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-gray-100 text-gray-600 hover:bg-gray-150"
-                        }`}
-                      >
-                        {date}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Priority Selection */}
-                <div>
-                  <label className="text-[13px] font-medium text-gray-700 mb-2 block">우선순위</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      onClick={() => setEditingTodo({ ...editingTodo, priority: "high" })}
-                      className={`px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all ${
-                        editingTodo.priority === "high"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-150"
-                      }`}
-                    >
-                      🔴 높음
-                    </button>
-                    <button
-                      onClick={() => setEditingTodo({ ...editingTodo, priority: "medium" })}
-                      className={`px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all ${
-                        editingTodo.priority === "medium"
-                          ? "bg-orange-100 text-orange-700"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-150"
-                      }`}
-                    >
-                      🟠 보통
-                    </button>
-                    <button
-                      onClick={() => setEditingTodo({ ...editingTodo, priority: "low" })}
-                      className={`px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all ${
-                        editingTodo.priority === "low"
-                          ? "bg-gray-200 text-gray-700"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-150"
-                      }`}
-                    >
-                      ⚪ 낮음
-                    </button>
-                  </div>
+                  <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
+                    우선순위
+                  </label>
+                  <select
+                    value={editingTodo.priority}
+                    onChange={(e) => setEditingTodo({ ...editingTodo, priority: e.target.value as any })}
+                    className="w-full px-3 py-2 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none text-[13px]"
+                  >
+                    <option value="high">높음</option>
+                    <option value="medium">중간</option>
+                    <option value="low">낮음</option>
+                  </select>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 mt-5">
-                <button
-                  onClick={() => setShowEditModal(false)}
-                  className="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-medium text-[14px] hover:bg-gray-200 transition-colors"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={handleUpdateTodo}
-                  disabled={!editingTodo.title.trim()}
-                  className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-medium text-[14px] hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  수정하기
-                </button>
-              </div>
+              <button
+                onClick={updateTodo}
+                className="w-full py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-all"
+              >
+                수정하기
+              </button>
             </div>
           </div>
         </div>
