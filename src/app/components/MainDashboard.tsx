@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CheckSquare, Target, Calendar as CalendarIcon, Circle, CheckCircle2, Plus, X, ChevronRight, ChevronLeft, Flame, Menu } from "lucide-react";
 
 type ScreenId = 'home' | 'todos' | 'goals-routines' | 'calendar';
@@ -27,7 +27,7 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickAddText, setQuickAddText] = useState("");
-  const today = new Date(2026, 2, 9); // March 9, 2026
+  const today = useMemo(() => new Date(2026, 2, 9), []); // March 9, 2026
   const [selectedDate, setSelectedDate] = useState(today);
   const [weekOffset, setWeekOffset] = useState(0); // 주 단위 오프셋
 
@@ -54,11 +54,8 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
   const totalTodos = todos.length;
   const progressPercentage = Math.round((completedTodos / totalTodos) * 100);
   const selectedDateLabel = `${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일`;
-  const dateSeed = selectedDate.getDate();
-  const visibleTodos = todos.filter((_, index) => ((index + dateSeed) % 2 === 0));
-  const visibleRoutines = routines.filter((_, index) => ((index + dateSeed) % 2 === 0));
-  const todoPreview = visibleTodos.length > 0 ? visibleTodos : todos;
-  const routinePreview = visibleRoutines.length > 0 ? visibleRoutines : routines;
+  const todoPreview = todos;
+  const routinePreview = routines;
 
   const toggleTodo = (id: string) => {
     setTodos(todos.map(t => {
@@ -112,26 +109,22 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
     return "좋은 저녁";
   };
 
-  // 주간 날짜 생성 (weekOffset 적용)
-  const getWeekDates = () => {
+  const weekDates = useMemo(() => {
     const dates = [];
     const current = new Date(today);
-    
-    // weekOffset만큼 주를 이동
+
     current.setDate(current.getDate() + (weekOffset * 7));
-    
+
     const dayOfWeek = current.getDay();
     const diff = current.getDate() - dayOfWeek;
-    
+
     for (let i = 0; i < 7; i++) {
       const date = new Date(current);
       date.setDate(diff + i);
       dates.push(date);
     }
     return dates;
-  };
-
-  const weekDates = getWeekDates();
+  }, [today, weekOffset]);
 
   // 이전 주로 이동
   const previousWeek = () => {

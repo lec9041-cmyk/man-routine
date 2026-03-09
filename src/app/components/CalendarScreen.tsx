@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ChevronLeft, ChevronRight, Plus, Circle, CheckCircle2, Calendar as CalendarIcon, MoreHorizontal, X } from "lucide-react";
 
 type ScreenId = 'home' | 'todos' | 'goals-routines' | 'calendar';
@@ -113,7 +113,23 @@ export function CalendarScreen({ onNavigate, selectedDate: propSelectedDate }: C
     ],
   });
 
+  useEffect(() => {
+    const savedEvents = localStorage.getItem("man-routine-calendar-events");
+    if (savedEvents) {
+      try {
+        setEventsData(JSON.parse(savedEvents));
+      } catch {
+        // ignore invalid local data
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("man-routine-calendar-events", JSON.stringify(eventsData));
+  }, [eventsData]);
+
   const previousMonth = () => {
+
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
     setSelectedDate(null);
   };
@@ -129,7 +145,7 @@ export function CalendarScreen({ onNavigate, selectedDate: propSelectedDate }: C
   };
 
   // 선택된 날짜의 이벤트
-  const selectedDayEvents = selectedDate ? eventsData[selectedDate] || [] : [];
+  const selectedDayEvents = useMemo(() => (selectedDate ? eventsData[selectedDate] || [] : []), [eventsData, selectedDate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 pb-24">
