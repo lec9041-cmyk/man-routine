@@ -68,56 +68,7 @@ export function TodoScreen({ onNavigate, shouldOpenAddModal }: TodoScreenProps) 
     }
   }, [shouldOpenAddModal]);
 
-  const [todos, setTodos] = useState<Todo[]>([
-    {
-      id: "1",
-      title: "프로젝트 기획서 작성",
-      category: "업무",
-      time: "10:00",
-      completed: false,
-      priority: "high",
-      dueDate: "오늘",
-      subTasks: [
-        { id: "1-1", title: "시장 조사 및 분석", completed: true },
-        { id: "1-2", title: "경쟁사 분석", completed: true },
-        { id: "1-3", title: "기획서 초안 작성", completed: false },
-      ],
-    },
-    {
-      id: "2",
-      title: "팀 회의 준비",
-      category: "업무",
-      time: "14:00",
-      completed: true,
-      priority: "high",
-      dueDate: "오늘",
-    },
-    {
-      id: "3",
-      title: "운동하기",
-      category: "건강",
-      time: "18:00",
-      completed: false,
-      priority: "medium",
-      dueDate: "오늘",
-    },
-    {
-      id: "4",
-      title: "영어 공부",
-      category: "학습",
-      completed: false,
-      priority: "medium",
-      dueDate: "내일",
-    },
-    {
-      id: "5",
-      title: "독서",
-      category: "취미",
-      completed: false,
-      priority: "low",
-      dueDate: "이번주",
-    },
-  ]);
+  const [todos, setTodos] = useState<Todo[]>([]);
 
   const priorityColors = {
     high: "bg-red-400",
