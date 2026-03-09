@@ -18,13 +18,13 @@ export function GoalRoutineScreen({ onNavigate, shouldOpenAddModal }: GoalRoutin
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       {/* Tab Switch Header */}
       <div className="sticky top-0 z-20 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-        <div className="px-5 pt-12 pb-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex-1" />
-            <div className="flex items-center justify-center gap-2 bg-white/60 backdrop-blur-sm p-1 rounded-full max-w-xs border border-white/50">
+        <div className="px-4 pt-6 pb-2 sm:px-5 sm:pt-8 sm:pb-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex-1 min-w-0" />
+            <div className="flex items-center justify-center gap-1.5 bg-white/60 backdrop-blur-sm p-1 rounded-full w-full max-w-[220px] border border-white/50">
               <button
                 onClick={() => setActiveTab('goals')}
-                className={`flex-1 py-2.5 px-4 rounded-full text-[13px] font-semibold transition-all ${
+                className={`flex-1 py-2 px-3 rounded-full text-[13px] font-semibold transition-all ${
                   activeTab === 'goals'
                     ? 'bg-purple-500 text-white shadow-sm'
                     : 'text-gray-600 hover:text-gray-900'
@@ -34,7 +34,7 @@ export function GoalRoutineScreen({ onNavigate, shouldOpenAddModal }: GoalRoutin
               </button>
               <button
                 onClick={() => setActiveTab('routines')}
-                className={`flex-1 py-2.5 px-4 rounded-full text-[13px] font-semibold transition-all ${
+                className={`flex-1 py-2 px-3 rounded-full text-[13px] font-semibold transition-all ${
                   activeTab === 'routines'
                     ? 'bg-orange-500 text-white shadow-sm'
                     : 'text-gray-600 hover:text-gray-900'
@@ -45,7 +45,7 @@ export function GoalRoutineScreen({ onNavigate, shouldOpenAddModal }: GoalRoutin
             </div>
             <button
               onClick={() => setShowHelpModal(true)}
-              className="w-7 h-7 rounded-full bg-white/60 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors"
+              className="w-8 h-8 rounded-full bg-white/60 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors shrink-0"
             >
               <HelpCircle className="w-4 h-4 text-gray-600" />
             </button>
