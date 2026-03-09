@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Plus, Circle, CheckCircle2, Calendar as CalendarIcon, MoreHorizontal } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { ChevronLeft, ChevronRight, Plus, Circle, CheckCircle2, Calendar as CalendarIcon, MoreHorizontal, X } from "lucide-react";
 
 type ScreenId = 'home' | 'todos' | 'goals-routines' | 'calendar';
 
@@ -12,17 +12,21 @@ interface CalendarEvent {
 }
 
 interface CalendarScreenProps {
-  onNavigate: (screen: ScreenId) => void;
+  onNavigate: (screen: ScreenId, options?: { date?: Date; openAddModal?: boolean }) => void;
   selectedDate?: Date;
 }
 
 export function CalendarScreen({ onNavigate, selectedDate: propSelectedDate }: CalendarScreenProps) {
   const [currentDate, setCurrentDate] = useState(propSelectedDate || new Date(2026, 2, 9));
-  const [selectedDate, setSelectedDate] = useState<number | null>(null);
+  const [selectedDate, setSelectedDate] = useState<number | null>(propSelectedDate?.getDate() || null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newEventTitle, setNewEventTitle] = useState("");
+  const [newEventType, setNewEventType] = useState<CalendarEvent["type"]>("todo");
 
   useEffect(() => {
     if (propSelectedDate) {
       setCurrentDate(propSelectedDate);
+      setSelectedDate(propSelectedDate.getDate());
     }
   }, [propSelectedDate]);
 
@@ -50,7 +54,7 @@ export function CalendarScreen({ onNavigate, selectedDate: propSelectedDate }: C
   const todayDate = today.getDate();
 
   // 각 날짜별 이벤트 (예시 데이터)
-  const eventsData: { [key: number]: CalendarEvent[] } = {
+  const [eventsData, setEventsData] = useState<{ [key: number]: CalendarEvent[] }>({
     1: [
       { id: "1", title: "운라인 수업", type: "event", color: "bg-red-400" },
       { id: "2", title: "수영 수업", type: "routine", color: "bg-yellow-400" },
@@ -107,9 +111,25 @@ export function CalendarScreen({ onNavigate, selectedDate: propSelectedDate }: C
     31: [
       { id: "26", title: "학기 내일", type: "event", color: "bg-red-400" },
     ],
-  };
+  });
+
+  useEffect(() => {
+    const savedEvents = localStorage.getItem("man-routine-calendar-events");
+    if (savedEvents) {
+      try {
+        setEventsData(JSON.parse(savedEvents));
+      } catch {
+        // ignore invalid local data
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("man-routine-calendar-events", JSON.stringify(eventsData));
+  }, [eventsData]);
 
   const previousMonth = () => {
+
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
     setSelectedDate(null);
   };
@@ -125,15 +145,15 @@ export function CalendarScreen({ onNavigate, selectedDate: propSelectedDate }: C
   };
 
   // 선택된 날짜의 이벤트
-  const selectedDayEvents = selectedDate ? eventsData[selectedDate] || [] : [];
+  const selectedDayEvents = useMemo(() => (selectedDate ? eventsData[selectedDate] || [] : []), [eventsData, selectedDate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 pb-24">
       {/* Header */}
       <div className="px-5 pt-8 pb-4">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-[24px] font-bold text-gray-900">집관적인 일정관리</h1>
-          <button className="w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm border border-white/50">
+          <h1 className="text-[24px] font-bold text-gray-900">직관적인 일정관리</h1>
+          <button onClick={() => onNavigate('home')} className="w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm border border-white/50">
             <X className="w-5 h-5 text-gray-700" />
           </button>
         </div>
@@ -242,6 +262,20 @@ export function CalendarScreen({ onNavigate, selectedDate: propSelectedDate }: C
             <h3 className="text-[16px] font-bold text-gray-900 mb-3 px-1">
               {currentDate.getMonth() + 1}월 {selectedDate}일
             </h3>
+            <div className="flex gap-2 mb-2">
+              <button
+                onClick={() => onNavigate('todos', { date: new Date(currentDate.getFullYear(), currentDate.getMonth(), selectedDate) })}
+                className="px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 text-[12px] font-semibold"
+              >
+                이 날짜 할일 보기
+              </button>
+              <button
+                onClick={() => onNavigate('goals-routines')}
+                className="px-3 py-1.5 rounded-lg bg-orange-100 text-orange-700 text-[12px] font-semibold"
+              >
+                이 날짜 루틴 보기
+              </button>
+            </div>
             <div className="space-y-2">
               {selectedDayEvents.map((event) => (
                 <div
@@ -273,18 +307,57 @@ export function CalendarScreen({ onNavigate, selectedDate: propSelectedDate }: C
       </div>
 
       {/* Floating Add Button */}
-      <button className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-blue-600 shadow-lg hover:shadow-xl transition-all flex items-center justify-center hover:scale-105">
+      <button onClick={() => setShowAddModal(true)} className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 sm:right-6 w-14 h-14 rounded-full bg-blue-600 shadow-lg hover:shadow-xl transition-all flex items-center justify-center hover:scale-105">
         <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
       </button>
-    </div>
-  );
-}
 
-// X 아이콘 컴포넌트
-function X({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-    </svg>
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-end justify-center p-3">
+          <div className="bg-white rounded-2xl sm:rounded-t-3xl w-full max-w-md p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[18px] font-bold text-gray-900">일정 추가</h3>
+              <button onClick={() => setShowAddModal(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                <X className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <input
+                value={newEventTitle}
+                onChange={(e) => setNewEventTitle(e.target.value)}
+                placeholder="제목을 입력하세요"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px]"
+              />
+              <div className="grid grid-cols-2 gap-2">
+                {(["todo", "routine", "goal", "event"] as const).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setNewEventType(type)}
+                    className={`px-3 py-2 rounded-lg text-[12px] font-semibold ${newEventType === type ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700"}`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => {
+                  if (!newEventTitle.trim()) return;
+                  const day = selectedDate || todayDate;
+                  const colorMap = { todo: "bg-blue-500", routine: "bg-orange-500", goal: "bg-green-500", event: "bg-purple-500" };
+                  const event: CalendarEvent = { id: Date.now().toString(), title: newEventTitle, type: newEventType, color: colorMap[newEventType] };
+                  setEventsData((prev) => ({ ...prev, [day]: [...(prev[day] || []), event] }));
+                  setSelectedDate(day);
+                  setNewEventTitle("");
+                  setShowAddModal(false);
+                }}
+                className="w-full py-3 rounded-xl bg-blue-600 text-white font-semibold"
+              >
+                추가하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
   );
 }

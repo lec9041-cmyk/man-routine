@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ChevronLeft,
   Plus,
@@ -50,6 +50,7 @@ export function GoalsScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Goal
   const [selectedGoalId, setSelectedGoalId] = useState<string>("");
   const [selectedCellIndex, setSelectedCellIndex] = useState<number>(-1); // 만다라트에서 선택된 셀
   const [viewMode, setViewMode] = useState<'list' | 'mandala'>('list'); // 리스트 vs 만다라트
+  const longPressTimerRef = useRef<number | null>(null);
   
   // shouldOpenAddModal이 true면 모달 열기
   useEffect(() => {
@@ -154,6 +155,21 @@ export function GoalsScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Goal
     },
   ]);
 
+  useEffect(() => {
+    const savedGoals = localStorage.getItem("man-routine-goals");
+    if (savedGoals) {
+      try {
+        setGoals(JSON.parse(savedGoals));
+      } catch {
+        // ignore invalid saved goals
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("man-routine-goals", JSON.stringify(goals));
+  }, [goals]);
+
   const categoryOptions = ["건강", "학습", "자기계발", "취미", "업무", "관계"];
   const colorOptions = [
     { name: "파랑", value: "from-blue-100 to-blue-200" },
@@ -240,6 +256,41 @@ export function GoalsScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Goal
     setSelectedGoalId(goalId);
     setSelectedCellIndex(cellIndex);
     setShowAddRoutineModal(true);
+  };
+
+  const startRoutineLongPress = (goalId: string, routineId: string) => {
+    if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = window.setTimeout(() => {
+      const action = window.prompt("변경은 edit, 삭제는 delete 를 입력하세요", "edit");
+      if (action === "delete") {
+        setGoals((prev) => prev.map((goal) =>
+          goal.id === goalId
+            ? { ...goal, linkedRoutines: goal.linkedRoutines.filter((routine) => routine.id !== routineId) }
+            : goal
+        ));
+      }
+      if (action === "edit") {
+        const title = window.prompt("루틴 이름을 입력하세요");
+        if (!title) return;
+        setGoals((prev) => prev.map((goal) =>
+          goal.id === goalId
+            ? {
+                ...goal,
+                linkedRoutines: goal.linkedRoutines.map((routine) =>
+                  routine.id === routineId ? { ...routine, title } : routine
+                ),
+              }
+            : goal
+        ));
+      }
+    }, 2000);
+  };
+
+  const cancelRoutineLongPress = () => {
+    if (longPressTimerRef.current) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
   };
 
   const RoutineList = ({ routines }: { routines: LinkedRoutine[] }) => {
@@ -482,6 +533,11 @@ export function GoalsScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Goal
                         <div
                           key={routine.id}
                           className="aspect-square rounded-lg bg-white p-2 flex flex-col items-center justify-center shadow-sm border border-gray-200"
+                          onMouseDown={() => startRoutineLongPress(goal.id, routine.id)}
+                          onMouseUp={cancelRoutineLongPress}
+                          onMouseLeave={cancelRoutineLongPress}
+                          onTouchStart={() => startRoutineLongPress(goal.id, routine.id)}
+                          onTouchEnd={cancelRoutineLongPress}
                           style={{ gridColumn: pos.col, gridRow: pos.row }}
                         >
                           <span className="text-lg mb-1">{routine.icon}</span>
@@ -539,8 +595,8 @@ export function GoalsScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Goal
 
       {/* Add Goal Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-end justify-center">
-          <div className="bg-white rounded-t-3xl w-full max-w-md shadow-2xl animate-slide-up">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-end justify-center p-3">
+          <div className="bg-white rounded-2xl sm:rounded-t-3xl w-full max-w-md shadow-2xl animate-slide-up">
             <div className="px-5 pt-4 pb-6">
               {/* Modal Header */}
               <div className="flex items-center justify-between mb-5">

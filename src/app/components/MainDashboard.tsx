@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CheckSquare, Target, Calendar as CalendarIcon, Circle, CheckCircle2, Plus, X, ChevronRight, ChevronLeft, Flame, Menu } from "lucide-react";
 
 type ScreenId = 'home' | 'todos' | 'goals-routines' | 'calendar';
@@ -27,11 +27,11 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickAddText, setQuickAddText] = useState("");
-  const today = new Date(2026, 2, 9); // March 9, 2026
+  const today = useMemo(() => new Date(2026, 2, 9), []); // March 9, 2026
   const [selectedDate, setSelectedDate] = useState(today);
   const [weekOffset, setWeekOffset] = useState(0); // 주 단위 오프셋
 
-  // 오늘 할일 (루틴 기반 + 일반)
+  // 선택한 날짜 할일 (루틴 기반 + 일반)
   const [todos, setTodos] = useState<TodoItem[]>([
     { id: "1", title: "영어 단어 10개", completed: true, fromRoutine: true, routineId: "r1" },
     { id: "2", title: "운동 30분", completed: true, fromRoutine: true, routineId: "r2" },
@@ -53,6 +53,9 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
   const completedTodos = todos.filter(t => t.completed).length;
   const totalTodos = todos.length;
   const progressPercentage = Math.round((completedTodos / totalTodos) * 100);
+  const selectedDateLabel = `${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일`;
+  const todoPreview = todos;
+  const routinePreview = routines;
 
   const toggleTodo = (id: string) => {
     setTodos(todos.map(t => {
@@ -106,26 +109,22 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
     return "좋은 저녁";
   };
 
-  // 주간 날짜 생성 (weekOffset 적용)
-  const getWeekDates = () => {
+  const weekDates = useMemo(() => {
     const dates = [];
     const current = new Date(today);
-    
-    // weekOffset만큼 주를 이동
+
     current.setDate(current.getDate() + (weekOffset * 7));
-    
+
     const dayOfWeek = current.getDay();
     const diff = current.getDate() - dayOfWeek;
-    
+
     for (let i = 0; i < 7; i++) {
       const date = new Date(current);
       date.setDate(diff + i);
       dates.push(date);
     }
     return dates;
-  };
-
-  const weekDates = getWeekDates();
+  }, [today, weekOffset]);
 
   // 이전 주로 이동
   const previousWeek = () => {
@@ -177,7 +176,6 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
                 key={index}
                 onClick={() => {
                   setSelectedDate(date);
-                  onNavigate('calendar', { date: date });
                 }}
                 className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-lg transition-all ${
                   isSelected 
@@ -224,7 +222,7 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
       {/* 오늘 할일 - 메인 콘텐츠로 최우선 배치 */}
       <div className="px-4 pb-3">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-[16px] font-bold text-gray-900">오늘 할일</h2>
+          <div><h2 className="text-[16px] font-bold text-gray-900">선택한 날짜 할일</h2><p className="text-[11px] text-gray-500">{selectedDateLabel}</p></div>
           <button
             onClick={() => onNavigate("todos")}
             className="flex items-center gap-0.5 text-[12px] text-blue-600 font-semibold"
@@ -235,7 +233,7 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
         </div>
 
         <div className="space-y-1.5">
-          {todos.slice(0, 5).map((todo) => (
+          {todoPreview.slice(0, 5).map((todo) => (
             <div
               key={todo.id}
               className="bg-white/70 backdrop-blur-sm rounded-xl border border-white/80 shadow-sm"
@@ -266,12 +264,12 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
           ))}
         </div>
         
-        {todos.length > 5 && (
+        {todoPreview.length > 5 && (
           <button
             onClick={() => onNavigate("todos")}
             className="w-full mt-2 py-2 text-[12px] text-gray-500 font-medium hover:text-gray-700"
           >
-            +{todos.length - 5}개 더보기
+            +{todoPreview.length - 5}개 더보기
           </button>
         )}
       </div>
@@ -295,10 +293,10 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
         </div>
       </div>
 
-      {/* 주간 루틴 - 간결하게 */}
+      {/* 선택한 날짜 루틴 - 간결하게 */}
       <div className="px-4 pb-4">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-[16px] font-bold text-gray-900">주간 루틴</h2>
+          <div><h2 className="text-[16px] font-bold text-gray-900">선택한 날짜 루틴</h2><p className="text-[11px] text-gray-500">{selectedDateLabel}</p></div>
           <button
             onClick={() => onNavigate("goals-routines")}
             className="flex items-center gap-0.5 text-[12px] text-orange-600 font-semibold"
@@ -309,7 +307,7 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          {routines.map((routine) => (
+          {routinePreview.map((routine) => (
             <div
               key={routine.id}
               className="bg-white/70 backdrop-blur-sm rounded-xl p-2.5 border border-white/80 shadow-sm"

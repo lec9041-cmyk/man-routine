@@ -89,7 +89,7 @@ export function RoutineScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Ro
       category: "건강",
       frequency: "weekly",
       targetCount: 5,
-      currentCount: 1,
+      currentCount: 3,
       weeklyCount: 3,
       streak: 8,
       bestStreak: 15,
@@ -120,7 +120,7 @@ export function RoutineScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Ro
       category: "학습",
       frequency: "weekly",
       targetCount: 4,
-      currentCount: 0,
+      currentCount: 2,
       weeklyCount: 2,
       streak: 3,
       bestStreak: 10,
@@ -136,7 +136,7 @@ export function RoutineScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Ro
       category: "자기계발",
       frequency: "monthly",
       targetCount: 4,
-      currentCount: 0,
+      currentCount: 1,
       monthlyCount: 1,
       streak: 7,
       bestStreak: 14,
@@ -202,23 +202,24 @@ export function RoutineScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Ro
     });
   };
 
+  const getRoutineDisplayCount = (routine: Routine) => {
+    if (routine.frequency === "daily") return routine.currentCount;
+    if (routine.frequency === "weekly") return routine.weeklyCount || 0;
+    return routine.monthlyCount || 0;
+  };
+
   const incrementCount = (id: string) => {
     setRoutines((prev) =>
       prev.map((routine) => {
         if (routine.id === id) {
-          const newCount = Math.min(routine.currentCount + 1, routine.targetCount);
-          const newWeeklyCount = routine.frequency === "weekly" 
-            ? Math.min((routine.weeklyCount || 0) + 1, routine.targetCount)
-            : routine.weeklyCount;
-          const newMonthlyCount = routine.frequency === "monthly"
-            ? Math.min((routine.monthlyCount || 0) + 1, routine.targetCount)
-            : routine.monthlyCount;
-          
+          const currentDisplayCount = getRoutineDisplayCount(routine);
+          const nextCount = Math.min(currentDisplayCount + 1, routine.targetCount);
+
           return {
             ...routine,
-            currentCount: newCount,
-            weeklyCount: newWeeklyCount,
-            monthlyCount: newMonthlyCount,
+            currentCount: nextCount,
+            weeklyCount: routine.frequency === "weekly" ? nextCount : routine.weeklyCount,
+            monthlyCount: routine.frequency === "monthly" ? nextCount : routine.monthlyCount,
           };
         }
         return routine;
@@ -230,19 +231,14 @@ export function RoutineScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Ro
     setRoutines((prev) =>
       prev.map((routine) => {
         if (routine.id === id) {
-          const newCount = Math.max(routine.currentCount - 1, 0);
-          const newWeeklyCount = routine.frequency === "weekly" && routine.weeklyCount
-            ? Math.max(routine.weeklyCount - 1, 0)
-            : routine.weeklyCount;
-          const newMonthlyCount = routine.frequency === "monthly" && routine.monthlyCount
-            ? Math.max(routine.monthlyCount - 1, 0)
-            : routine.monthlyCount;
-          
+          const currentDisplayCount = getRoutineDisplayCount(routine);
+          const nextCount = Math.max(currentDisplayCount - 1, 0);
+
           return {
             ...routine,
-            currentCount: newCount,
-            weeklyCount: newWeeklyCount,
-            monthlyCount: newMonthlyCount,
+            currentCount: nextCount,
+            weeklyCount: routine.frequency === "weekly" ? nextCount : routine.weeklyCount,
+            monthlyCount: routine.frequency === "monthly" ? nextCount : routine.monthlyCount,
           };
         }
         return routine;
@@ -294,9 +290,9 @@ export function RoutineScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Ro
     if (routines.length === 0) return null;
 
     return (
-      <div className="mb-6">
-        <h3 className="text-[14px] font-semibold text-gray-500 mb-3 px-5">{title}</h3>
-        <div className="space-y-2.5 px-5">
+      <div className="mb-5">
+        <h3 className="text-[13px] font-semibold text-gray-500 mb-2 px-4 sm:px-5">{title}</h3>
+        <div className="space-y-2 px-4 sm:px-5">
           {routines.map((routine) => {
             const isCompleted = routine.frequency === "daily"
               ? routine.currentCount >= routine.targetCount
@@ -317,9 +313,9 @@ export function RoutineScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Ro
                 key={routine.id}
                 className="bg-white/70 backdrop-blur-sm rounded-xl border border-white/80 shadow-sm"
               >
-                <div className="p-2">
-                  <div className="flex items-center gap-2">
-                    <div className="flex-shrink-0">
+                <div className="px-2.5 py-2">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-shrink-0 pt-0.5">
                       {isCompleted ? (
                         <CheckCircle2 className="w-4.5 h-4.5 text-blue-500" />
                       ) : (
@@ -329,9 +325,9 @@ export function RoutineScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Ro
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <span className="text-[15px]">{routine.icon}</span>
+                        <span className="text-[14px] leading-none">{routine.icon}</span>
                         <h4
-                          className={`text-[13px] font-semibold ${
+                          className={`text-[13px] leading-tight font-semibold truncate ${
                             isCompleted
                               ? "text-gray-400 line-through"
                               : "text-gray-900"
@@ -348,16 +344,16 @@ export function RoutineScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Ro
                         <span className="text-[9px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded-md font-bold">
                           {frequencyIcons[routine.frequency]} {frequencyLabels[routine.frequency]}
                         </span>
-                        <span className="text-[10px] text-gray-600 ml-auto font-bold">
+                        <span className="text-[11px] text-gray-700 ml-auto font-bold tabular-nums leading-none">
                           {displayCount}/{routine.targetCount}
                         </span>
                       </div>
 
                       {/* Progress Bar */}
                       <div className="mb-1.5">
-                        <div className="w-full bg-gray-100 rounded-full h-1">
+                        <div className="w-full bg-gray-100 rounded-full h-1.5">
                           <div
-                            className={`bg-gradient-to-r ${routine.color} rounded-full h-1 transition-all duration-300`}
+                            className={`bg-gradient-to-r ${routine.color} rounded-full h-1.5 transition-all duration-300`}
                             style={{ width: `${progressPercentage}%` }}
                           />
                         </div>
@@ -368,25 +364,25 @@ export function RoutineScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Ro
                         <div className="flex items-center gap-1 bg-gray-50 rounded-lg p-0.5">
                           <button
                             onClick={() => decrementCount(routine.id)}
-                            disabled={routine.currentCount === 0}
-                            className="w-5 h-5 rounded bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            disabled={displayCount === 0}
+                            className="w-6 h-6 rounded bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                           >
-                            <Minus className="w-2.5 h-2.5 text-gray-500" />
+                            <Minus className="w-3 h-3 text-gray-500" />
                           </button>
-                          <span className="text-[12px] font-bold text-gray-800 w-5 text-center">
-                            {routine.currentCount}
+                          <span className="text-[12px] font-bold text-gray-800 w-6 text-center tabular-nums">
+                            {displayCount}
                           </span>
                           <button
                             onClick={() => incrementCount(routine.id)}
-                            disabled={routine.currentCount >= routine.targetCount}
-                            className="w-5 h-5 rounded bg-blue-500 flex items-center justify-center hover:bg-blue-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            disabled={displayCount >= routine.targetCount}
+                            className="w-6 h-6 rounded bg-blue-500 flex items-center justify-center hover:bg-blue-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                           >
-                            <Plus className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                            <Plus className="w-3 h-3 text-white" strokeWidth={3} />
                           </button>
                         </div>
 
                         {/* Streak Info */}
-                        <div className="flex items-center gap-0.5">
+                        <div className="flex items-center gap-0.5 self-end">
                           <Flame className="w-3 h-3 text-orange-400" />
                           <p className="text-[11px] font-bold text-orange-500">
                             {routine.streak}일
@@ -405,7 +401,7 @@ export function RoutineScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Ro
   };
 
   return (
-    <div className="min-h-screen bg-transparent pb-24">
+    <div className="min-h-screen bg-transparent pb-32">
       {/* Header */}
       {!hideHeader && (
         <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
@@ -469,9 +465,9 @@ export function RoutineScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Ro
       )}
 
       {/* Today's Progress */}
-      <div className="px-5 py-5">
-        <div className="bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl p-5 shadow-sm mb-5">
-          <div className="flex items-center justify-between mb-3">
+      <div className="px-4 pt-3 pb-2 sm:px-5 sm:pt-4">
+        <div className="bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl px-4 py-3.5 shadow-sm mb-4">
+          <div className="flex items-center justify-between mb-2.5">
             <div>
               <p className="text-purple-600 text-[12px] mb-1 font-medium">
                 {viewMode === "all" && "전체 루틴"}
@@ -479,21 +475,21 @@ export function RoutineScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Ro
                 {viewMode === "weekly" && "이번 주 루틴"}
                 {viewMode === "monthly" && "이번 달 루틴"}
               </p>
-              <p className="text-purple-900 text-2xl font-bold">
+              <p className="text-purple-900 text-[22px] leading-none font-bold">
                 {filteredRoutines.length}개
               </p>
             </div>
-            <div className="w-14 h-14 rounded-xl bg-white/60 flex items-center justify-center">
-              <span className="text-purple-700 font-bold text-lg">{completionRate}%</span>
+            <div className="w-12 h-12 rounded-xl bg-white/60 flex items-center justify-center">
+              <span className="text-purple-700 font-bold text-[15px] leading-none">{completionRate}%</span>
             </div>
           </div>
-          <div className="w-full bg-white/40 rounded-full h-2 mb-2">
+          <div className="w-full bg-white/40 rounded-full h-1.5 mb-1.5">
             <div
-              className="bg-white rounded-full h-2 transition-all duration-500"
+              className="bg-white rounded-full h-1.5 transition-all duration-500"
               style={{ width: `${completionRate}%` }}
             />
           </div>
-          <p className="text-purple-700 text-[12px]">
+          <p className="text-purple-700 text-[11px] leading-relaxed">
             {completionRate > 0 ? "좋아요! 계속해서 루틴을 완성해보세요 💪" : "오늘의 루틴을 시작해보세요!"}
           </p>
         </div>
@@ -508,9 +504,9 @@ export function RoutineScreen({ onNavigate, shouldOpenAddModal, hideHeader }: Ro
       {/* Floating Add Button */}
       <button 
         onClick={() => setShowAddModal(true)}
-        className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-purple-400 to-purple-500 shadow-lg hover:shadow-xl transition-all flex items-center justify-center hover:scale-105"
+        className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 sm:right-6 w-[52px] h-[52px] rounded-full bg-gradient-to-br from-purple-400 to-purple-500 shadow-lg hover:shadow-xl transition-all flex items-center justify-center hover:scale-105 z-30"
       >
-        <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
+        <Plus className="w-5 h-5 text-white" strokeWidth={2.5} />
       </button>
 
       {/* Add Routine Modal */}
